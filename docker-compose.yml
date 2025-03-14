@@ -1,0 +1,14 @@
+services:
+  frontend:
+    build: ./frontend
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /src/frontend
+          ignore:
+            - node_modules
+        - action: rebuild
+          path: ./frontend/package.json
+    ports:
+      - "3000:3000"
