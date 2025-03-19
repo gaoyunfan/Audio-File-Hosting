@@ -1,6 +1,5 @@
-# Use Node.js 18 Alpine for a lightweight container
-FROM node:18-alpine AS base
-WORKDIR /src/frontend
+FROM node:23-alpine AS base
+WORKDIR /code
 
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 RUN \
@@ -14,6 +13,9 @@ COPY . .
 
 ENV NODE_ENV=development
 
+ENV NODE_OPTIONS="--no-warnings --trace-warnings"
+ENV NODE_DISABLE_COLORS=1
+
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "dev"]
