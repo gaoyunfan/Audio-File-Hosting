@@ -12,3 +12,59 @@ services:
           path: ./frontend/package.json
     ports:
       - "3000:3000"
+user-service:
+    build: ./backend/user-service
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB}
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - user-db
+      - redis
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/user-service/
+          target: /code/user-service/
+          ignore:
+            - venv
+            - __pycache__
+            - .dockerignore
+        - action: rebuild
+          path: ./backend/user-service/requirements.txt
+  # user-service:
+  #   build: ./backend/user
+  #   restart: always
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - FLASK_ENV=development
+  #     - DB_USER=${POSTGRES_USER}
+  #     - DB_PASSWORD=${POSTGRES_PASSWORD}
+  #     - DB_NAME=${POSTGRES_DB}
+  #     - DB_HOST=${POSTGRES_HOST}
+  #     - DB_PORT=5432
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #   depends_on:
+  #     - user-db
+  #     - redis
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./backend/user/app
+  #         target: /code/user/app
+  #         ignore:
+  #           - __pycache__
+  #       - action: rebuild
+  #         path: ./backend/user/requirements.txt
+volumes:
+  user_db_data:
+  redis_data:
