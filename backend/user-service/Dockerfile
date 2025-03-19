@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-WORKDIR /code/user 
+WORKDIR /code/user-service
 
 
 RUN apt-get update && apt-get install -y \
@@ -14,12 +14,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./app ./app
-COPY run.py .
+COPY . .
 
 EXPOSE 8000
 
-ENV FLASK_APP=run.py
 
-CMD ["python", "run.py"]
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
 
