@@ -7,25 +7,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { handleRegister } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { toastSucccess, toastError } from "@/lib/utils";
 import { registerSchema, RegisterFormData } from "@/lib/schemas";
-import { useDispatch } from "react-redux";
-import { setUser } from "@/lib/redux/user";
-import { useQueryClient } from "@tanstack/react-query";
+import { useUserSession } from "@/lib/hooks";
 export default function RegisterPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const queryClient = useQueryClient();
+  const { updateUserSession } = useUserSession();
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -36,12 +31,11 @@ export default function RegisterPage() {
     mode: "onChange",
   });
   const onSubmit = async (values: RegisterFormData) => {
-    console.log(values);
     const res = await handleRegister(values);
 
     if (res.success) {
       toastSucccess("Register successful");
-      queryClient.invalidateQueries({ queryKey: ["userSession"] });
+      await updateUserSession();
       router.push("/");
     } else {
       toastError(res.message);

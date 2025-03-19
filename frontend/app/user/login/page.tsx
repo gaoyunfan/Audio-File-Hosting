@@ -4,21 +4,22 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { handleLogin } from "@/lib/actions/auth";
+import { callValidatePath, handleLogin } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { toastSucccess, toastError } from "@/lib/utils";
 import { use, useState } from "react";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/lib/redux/user";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUserSession } from "@/lib/hooks";
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [is_submitting, setIsSubmitting] = useState(false);
-  const dispatch = useDispatch();
   const queryClient = useQueryClient();
+  const { updateUserSession } = useUserSession();
   const isButtonDisabled =
     !username.trim() || !password.trim() || is_submitting;
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,7 +30,7 @@ export default function LoginPage() {
     const res = await handleLogin(formData);
     if (res.success && "user" in res) {
       toastSucccess("Login successful");
-      queryClient.invalidateQueries({ queryKey: ["userSession"] });
+      await updateUserSession();
       router.push("/");
     } else {
       console.log("res", res);

@@ -10,30 +10,49 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/lib/hooks";
-import { getUserFromSession, handleLogout } from "@/lib/actions/auth";
+import { useUserSession } from "@/lib/hooks";
+import { handleLogout, refreshAccessToken } from "@/lib/actions/auth";
 import { toast } from "react-toastify";
 import { CircleUserRound } from "lucide-react";
+import { use, useEffect } from "react";
+import { toastError } from "@/lib/utils";
 
 export default function NavBar() {
-  const { user } = useAuth();
   const router = useRouter();
 
   const pathname = usePathname();
-  if (pathname === "/user/login" || pathname === "/user/register") {
-    return null;
-  }
+  const { user, updateUserSession } = useUserSession();
 
+  if (pathname === "/user/login" || pathname === "/user/register") {
+    return <></>;
+  }
   const performLogout = async () => {
     const result = await handleLogout();
     if (!result.success) {
       toast.error(`Error logging out`);
     } else {
       toast.success(result.message);
+
       router.push("/user/login");
     }
   };
+
+  useEffect(() => {
+    console.log("useEffect: user detected", user);
+    console.log(
+      "useEffect: user detected, starting token refresh timer at",
+      new Date().toLocaleTimeString()
+    );
+    const timerId = setInterval(async () => {
+      const { success } = await refreshAccessToken();
+      if (!success) {
+        toastError("Session expired. Please login again");
+        await updateUserSession();
+        router.push("/user/login");
+      }
+    }, 1000 * 30 * 1);
+    return () => clearInterval(timerId);
+  }, [user, router, updateUserSession]);
 
   return (
     <nav className="bg-accent shadow-sm border-b py-4 h-14 px-6">

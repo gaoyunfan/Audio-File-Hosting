@@ -1,9 +1,9 @@
 "use server";
+import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { RegisterFormData, SessionData, User } from "../schemas";
 import { getIronSession, IronSessionData } from "iron-session";
-import { redirect } from "next/navigation";
-import { access } from "fs";
+import { revalidatePath } from "next/cache";
 
 declare module "iron-session" {
   interface IronSessionData extends SessionData {
@@ -18,7 +18,7 @@ const sessionOptions = {
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as "lax",
   },
 };
 
@@ -53,11 +53,8 @@ export async function handleRegister(formData: RegisterFormData) {
   return { success: true, message: message, user: user };
 }
 
-export async function handleLogin(formValues: {
-  username: string;
-  password: string;
-  password2: string;
-}) {
+export async function handleLogin(formData: FormData) {
+  const formValues = Object.fromEntries(formData);
   const result = await fetchData("auth/login/", formValues);
   console.log("login result", result);
   if (!result.success) return result;
@@ -70,8 +67,8 @@ export async function handleLogin(formValues: {
 }
 
 export async function handleLogout() {
-  const cookieSotre = await cookies();
-  const refreshToken = cookieSotre.get("refreshToken")?.value;
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken")?.value;
   try {
     const res = await fetch(`${USER_SERVICE_URL}/auth/logout/`, {
       method: "POST",
@@ -86,7 +83,11 @@ export async function handleLogout() {
       console.log("log out errorData", errorData);
       throw new Error("Failed to logout");
     }
-    destroyUserSession();
+    const session = await getUserSession();
+    session.destroy();
+    cookieStore.delete("accessToken");
+    cookieStore.delete("refreshToken");
+
     return { success: true, message: "Logged out successfully" };
   } catch {
     return { success: false, message: "Failed to logout" };
@@ -111,60 +112,41 @@ export async function refreshAccessToken() {
     }
     const newAccessToken = responseData.access;
     const newRefreshToken = responseData.refresh ?? null;
-
     storeTokens(newAccessToken, newRefreshToken);
+    return { success: true, message: "Access token refreshed" };
   } catch (error) {
+    cookieStore.delete("accessToken");
+    cookieStore.delete("refreshToken");
+    const session = await getUserSession();
+    session.destroy();
     console.error("Failed to refresh access token", error);
-    await destroyUserSession();
     return { success: false, message: "Failed to refresh access token" };
   }
-
-  return { success: true, message: "Access token refreshed" };
 }
 
 const storeUserSession = async (user: User) => {
-  const cookieStore = await cookies();
-  const session = await getIronSession<IronSessionData>(
-    cookieStore,
-    sessionOptions
-  );
+  const session = await getUserSession();
   session.user = { ...user };
   await session.save();
 };
 
-const destroyUserSession = async () => {
-  const cookieStore = await cookies();
-  const session = await getIronSession<IronSessionData>(
-    cookieStore,
-    sessionOptions
-  );
-  session.destroy();
-  cookieStore.delete("accessToken");
-  cookieStore.delete("refreshToken");
-};
-
 export const getUserFromSession = async () => {
-  const cookieStore = await cookies();
-  const session = await getIronSession<IronSessionData>(
-    cookieStore,
-    sessionOptions
-  );
+  const session = await getUserSession();
   if (!session.user) return null;
   return session.user;
 };
 
 export async function updateUserSession(updatedUser: User) {
-  const cookieStore = await cookies();
-  const session = await getIronSession<IronSessionData>(
-    cookieStore,
-    sessionOptions
-  );
-
+  const session = await getUserSession();
   session.user = updatedUser;
 
   await session.save();
 
   return { success: true, message: "User session updated successfully" };
+}
+
+export async function callValidatePath(path: string) {
+  revalidatePath(path);
 }
 
 const storeTokens = async (
@@ -183,3 +165,31 @@ const storeTokens = async (
     });
   }
 };
+
+export const getUserSession = async () => {
+  const cookieStore = await cookies();
+  const session = await getIronSession<IronSessionData>(
+    cookieStore,
+    sessionOptions
+  );
+  return session;
+};
+
+function getTokenExpiration(token: string, secret?: string): Date | null {
+  if (!token) return null;
+
+  try {
+    const decoded = secret ? jwt.verify(token, secret) : jwt.decode(token);
+
+    if (!decoded || typeof decoded === "string") return null;
+
+    return decoded.exp ? new Date(decoded.exp * 1000) : null;
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      console.error("Token expired:", error.expiredAt);
+      return new Date(error.expiredAt);
+    }
+    console.error("Error decoding JWT:", error);
+    return null;
+  }
+}
