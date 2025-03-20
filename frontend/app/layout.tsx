@@ -35,7 +35,7 @@ export default function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen w-screen flex flex-col overflow-hidden`}
           >
             <NavBar />
-            <div className="flex-1 overflow-y-auto">{children}</div>
+            <div className="flex-1">{children}</div>
             <ToastContainer />
           </body>
         </QueryProvider>

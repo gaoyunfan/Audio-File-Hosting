@@ -14,7 +14,7 @@ import { useUserSession } from "@/lib/hooks";
 import { handleLogout, refreshAccessToken } from "@/lib/actions/auth";
 import { toast } from "react-toastify";
 import { CircleUserRound } from "lucide-react";
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 import { toastError } from "@/lib/utils";
 
 export default function NavBar() {
@@ -22,8 +22,27 @@ export default function NavBar() {
 
   const pathname = usePathname();
   const { user, updateUserSession } = useUserSession();
+  useEffect(() => {
+    if (!user) {
+      console.log("No user detected, clearing token refresh timer if exists.");
+      return;
+    }
+    console.log(
+      "useEffect: user detected, starting token refresh timer at",
+      new Date().toLocaleTimeString()
+    );
+    const timerId = setInterval(async () => {
+      const { success } = await refreshAccessToken();
+      if (!success) {
+        clearInterval(timerId);
+        toastError("Session expired. Please login again");
+        router.push("/users/login");
+      }
+    }, 1000 * 60 * 13);
+    return () => clearInterval(timerId);
+  }, [user, router]);
 
-  if (pathname === "/user/login" || pathname === "/user/register") {
+  if (pathname === "/users/login" || pathname === "/users/register") {
     return <></>;
   }
   const performLogout = async () => {
@@ -32,34 +51,20 @@ export default function NavBar() {
       toast.error(`Error logging out`);
     } else {
       toast.success(result.message);
-
-      router.push("/user/login");
+      await updateUserSession();
+      router.push("/users/login");
     }
   };
-
-  useEffect(() => {
-    console.log("useEffect: user detected", user);
-    console.log(
-      "useEffect: user detected, starting token refresh timer at",
-      new Date().toLocaleTimeString()
-    );
-    const timerId = setInterval(async () => {
-      const { success } = await refreshAccessToken();
-      if (!success) {
-        toastError("Session expired. Please login again");
-        await updateUserSession();
-        router.push("/user/login");
-      }
-    }, 1000 * 30 * 1);
-    return () => clearInterval(timerId);
-  }, [user, router, updateUserSession]);
-
   return (
     <nav className="bg-accent shadow-sm border-b py-4 h-14 px-6">
       <div className="flex justify-between items-center">
-        <div className="min-w-[250px]">
+        <div className="min-w-[250px] flex items-center gap-4">
           <Link href="/" className="text-xl font-bold ">
             Audio Hosting App
+          </Link>
+
+          <Link href="/users" className="text-lg">
+            User Management
           </Link>
         </div>
         <DropdownMenu>

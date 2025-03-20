@@ -41,6 +41,7 @@ services:
           target: /code
           ignore:
             - node_modules
+            - .next
         - action: rebuild
           path: ./frontend/package.json
     ports:

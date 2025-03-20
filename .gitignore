@@ -45,3 +45,4 @@ next-env.d.ts
 venv
 *.pyc
 __pycache__/
+audio_venv/

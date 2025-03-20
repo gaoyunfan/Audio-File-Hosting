@@ -4,12 +4,10 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { callValidatePath, handleLogin } from "@/lib/actions/auth";
+import { handleLogin } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { toastSucccess, toastError } from "@/lib/utils";
-import { use, useState } from "react";
-import { useDispatch } from "react-redux";
-import { setUser } from "@/lib/redux/user";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserSession } from "@/lib/hooks";
 
@@ -31,6 +29,7 @@ export default function LoginPage() {
     if (res.success && "user" in res) {
       toastSucccess("Login successful");
       await updateUserSession();
+
       router.push("/");
     } else {
       console.log("res", res);
@@ -79,7 +78,7 @@ export default function LoginPage() {
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link
-                href="/user/register"
+                href="/users/register"
                 className="underline underline-offset-4"
               >
                 Sign up

@@ -3,92 +3,59 @@ from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserSerializer
+from .serializers import EditUserSerializer, UserSerializer
 from django.db import transaction
+from .permissions import IsSelfOrAdminOrReadOnly
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 User = get_user_model()
 
 
-class LoginView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None:
-            token = RefreshToken.for_user(user)
-
-            return Response(
-                {
-                    "refresh": str(token),
-                    "access": str(token.access_token),
-                    "user": UserSerializer(user).data,
-                }
-            )
-        return Response({"message": "Invalid credentials"}, status=401)
-
-
-class LogoutView(APIView):
-
-    def post(self, request):
-        try:
-            refresh_token = request.data.get("refresh")
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-            return Response({"message": "Successfully logged out."}, status=200)
-        except Exception as e:
-            return Response(
-                {"message": "Invalid token or token already expired."}, status=400
-            )
-
-
-class RegisterView(APIView):
-    @transaction.atomic
-    def post(self, request):
-        username = request.data.get("username")
-        password = request.data.get("password")
-        password2 = request.data.get("password2")
-
-        if not username or not password or not password2:
-            return Response(
-                {"message": "Username, password and confirmed password are required"},
-                status=400,
-            )
-
-        if password != password2 or len(password) < 8:
-            return Response({"message": "Invalid username or password"}, status=400)
-
-        if User.objects.filter(username=username).exists():
-            return Response({"message": "User already exists"}, status=400)
-
-        user = User(username=username)
-        user.set_password(password)
-        user.save()
-
-        refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-        return Response(
-            {
-                "message": "User created",
-                "User": UserSerializer(user).data,
-                "refresh_token": str(refresh),
-                "access_token": str(access),
-            },
-            status=201,
-        )
-
-
 class UserListView(generics.ListAPIView):
-
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsSelfOrAdminOrReadOnly]
+
+    def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(
+                {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+
+        user = self.get_object(pk)
+        if not user:
+            return Response(
+                {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = EditUserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(
+                {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        user.delete()
+        return Response(
+            {"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT
+        )

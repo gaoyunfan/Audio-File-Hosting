@@ -1,11 +1,11 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { toast, Bounce } from "react-toastify"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { toast, Bounce } from "react-toastify";
 
+export const TERMINATED_MESSAGE = "Session terminated";
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
-
 
 export function toastSucccess(message: string) {
   toast.success(message, {

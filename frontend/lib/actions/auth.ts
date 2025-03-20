@@ -1,13 +1,13 @@
 "use server";
-import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
-import { RegisterFormData, SessionData, User } from "../schemas";
+import { RegisterFormData, SessionData, SessionUser, User } from "../schemas";
 import { getIronSession, IronSessionData } from "iron-session";
 import { revalidatePath } from "next/cache";
+import jwt from "jsonwebtoken";
 
 declare module "iron-session" {
   interface IronSessionData extends SessionData {
-    user?: User;
+    user?: SessionUser;
   }
 }
 
@@ -49,7 +49,9 @@ export async function handleRegister(formData: RegisterFormData) {
 
   const { access, refresh, user, message } = result.data;
   await storeTokens(access, refresh);
-  await storeUserSession(user);
+  const decodedToken = jwt.decode(access);
+  const isAdmin = extractAdminFlag(decodedToken);
+  await storeUserSession(user, isAdmin);
   return { success: true, message: message, user: user };
 }
 
@@ -61,9 +63,20 @@ export async function handleLogin(formData: FormData) {
 
   const { access, refresh, user, message } = result.data;
   await storeTokens(access, refresh);
-  await storeUserSession(user);
+  const decodedToken = jwt.decode(access);
+  const isAdmin = extractAdminFlag(decodedToken);
+  console.log(`user: ${user}, isAdmin: ${isAdmin}`);
+  await storeUserSession(user, isAdmin);
 
   return { success: true, message: message, user: user };
+}
+
+function extractAdminFlag(decodedToken: string | jwt.JwtPayload | null) {
+  return decodedToken &&
+    typeof decodedToken === "object" &&
+    "isAdmin" in decodedToken
+    ? decodedToken.isAdmin
+    : false;
 }
 
 export async function handleLogout() {
@@ -94,10 +107,10 @@ export async function handleLogout() {
   }
 }
 export async function refreshAccessToken() {
+  console.log("refresh access token at:", new Date().toLocaleTimeString());
   const cookieStore = await cookies();
   try {
-    const refreshToken = cookieStore.get("refreshToken")?.value;
-    console.log("refreshToken", refreshToken);
+    let refreshToken = cookieStore.get("refreshToken")?.value;
     const res = await fetch(`${USER_SERVICE_URL}/auth/refresh/`, {
       method: "POST",
       headers: {
@@ -112,7 +125,21 @@ export async function refreshAccessToken() {
     }
     const newAccessToken = responseData.access;
     const newRefreshToken = responseData.refresh ?? null;
-    storeTokens(newAccessToken, newRefreshToken);
+    cookieStore.set("accessToken", newAccessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+    });
+    if (newRefreshToken) {
+      cookieStore.set("refreshToken", newRefreshToken, {
+        httpOnly: true,
+        sameSite: "lax",
+      });
+    }
+    const decodedToken = jwt.decode(newAccessToken);
+    const isAdmin = extractAdminFlag(decodedToken);
+    const session = await getUserSession();
+    session.user = { ...session.user, isAdmin: isAdmin } as SessionUser;
+    await session.save();
     return { success: true, message: "Access token refreshed" };
   } catch (error) {
     cookieStore.delete("accessToken");
@@ -124,21 +151,21 @@ export async function refreshAccessToken() {
   }
 }
 
-const storeUserSession = async (user: User) => {
+const storeUserSession = async (user: User, isAdmin: boolean) => {
   const session = await getUserSession();
-  session.user = { ...user };
+  session.user = { ...user, isAdmin: isAdmin };
   await session.save();
 };
 
 export const getUserFromSession = async () => {
   const session = await getUserSession();
-  if (!session.user) return null;
+  if (!session || !session.user) return null;
   return session.user;
 };
 
-export async function updateUserSession(updatedUser: User) {
+export async function updateUserSession(updatedUser: User, isAdmin: boolean) {
   const session = await getUserSession();
-  session.user = updatedUser;
+  session.user = { ...updatedUser, isAdmin: isAdmin };
 
   await session.save();
 
@@ -153,13 +180,14 @@ const storeTokens = async (
   access_token: string,
   refresh_token: string | null
 ) => {
+  "use server";
   const cookieStore = await cookies();
-  cookieStore.set("accessToken", JSON.stringify(access_token), {
+  cookieStore.set("accessToken", access_token, {
     httpOnly: true,
     sameSite: "lax",
   });
   if (refresh_token) {
-    cookieStore.set("refreshToken", JSON.stringify(refresh_token), {
+    cookieStore.set("refreshToken", refresh_token, {
       httpOnly: true,
       sameSite: "lax",
     });
@@ -174,22 +202,3 @@ export const getUserSession = async () => {
   );
   return session;
 };
-
-function getTokenExpiration(token: string, secret?: string): Date | null {
-  if (!token) return null;
-
-  try {
-    const decoded = secret ? jwt.verify(token, secret) : jwt.decode(token);
-
-    if (!decoded || typeof decoded === "string") return null;
-
-    return decoded.exp ? new Date(decoded.exp * 1000) : null;
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      console.error("Token expired:", error.expiredAt);
-      return new Date(error.expiredAt);
-    }
-    console.error("Error decoding JWT:", error);
-    return null;
-  }
-}

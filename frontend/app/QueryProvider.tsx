@@ -1,14 +1,27 @@
 "use client";
 
+import { toastError } from "@/lib/utils";
 import {
   isServer,
+  QueryCache,
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import React, { ReactNode } from "react";
 
-function makeQueryClient() {
+function makeQueryClient(router: any) {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        const errorMessage = error?.message || "";
+
+        if (errorMessage.includes("Session terminated")) {
+          toastError("Re-login required");
+          router.push("/users/login");
+        }
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000,
@@ -17,19 +30,24 @@ function makeQueryClient() {
   });
 }
 
-let browserQueryClient: QueryClient | undefined = undefined
+let browserQueryClient: QueryClient | undefined = undefined;
 
 function getQueryClient() {
-    if (isServer) {
-        return makeQueryClient();
-    } else {
-        if (!browserQueryClient) {
-            browserQueryClient = makeQueryClient();
-        }
-        return browserQueryClient;
+  const router = useRouter();
+  if (isServer) {
+    return makeQueryClient(router);
+  } else {
+    if (!browserQueryClient) {
+      browserQueryClient = makeQueryClient(router);
     }
+    return browserQueryClient;
+  }
 }
 
 export default function QueryProvider({ children }: { children: ReactNode }) {
-    const queryClient = getQueryClient();
-    return (<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>)}
+  const router = useRouter();
+  const queryClient = getQueryClient();
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+}
