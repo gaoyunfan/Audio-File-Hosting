@@ -4,12 +4,10 @@ import { useState } from "react";
 import {
   Audio,
   AudioEditFormValues,
-  EditUserFormData,
   SESSION_TERMINATED_MESSAGE,
   SessionUser,
-  User,
 } from "@/lib/schemas";
-import { MoreHorizontal, Trash, Pencil, Edit } from "lucide-react";
+import { MoreHorizontal, Trash, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +15,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -29,8 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toastSucccess, toastError } from "@/lib/utils";
-import { deleteUser, updateUser } from "@/lib/actions/user_actions";
-import { callValidatePath } from "@/lib/actions/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { deleteAudio, updateAudio } from "@/lib/actions/audio_actions";
@@ -41,7 +36,7 @@ interface UserActionsProps {
   sessionUser?: SessionUser | null;
 }
 
-export function AudioActions({ audio, sessionUser }: UserActionsProps) {
+export function AudioActions({ audio }: UserActionsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"edit" | "delete" | null>(null);
   const router = useRouter();

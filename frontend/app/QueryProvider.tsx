@@ -32,8 +32,7 @@ function makeQueryClient(router: any) {
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
-function getQueryClient() {
-  const router = useRouter();
+function getQueryClient(router: any) {
   if (isServer) {
     return makeQueryClient(router);
   } else {
@@ -46,7 +45,7 @@ function getQueryClient() {
 
 export default function QueryProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const queryClient = getQueryClient();
+  const queryClient = getQueryClient(router);
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );

@@ -3,8 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/navbar";
 import { ToastContainer } from "react-toastify";
-import StoreProvider from "./StoreProvider";
-import { Query } from "@tanstack/react-query";
 import QueryProvider from "./QueryProvider";
 
 const geistSans = Geist({
@@ -29,17 +27,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <StoreProvider>
-        <QueryProvider>
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen w-screen flex flex-col overflow-hidden`}
-          >
-            <NavBar />
-            <div className="flex-1">{children}</div>
-            <ToastContainer />
-          </body>
-        </QueryProvider>
-      </StoreProvider>
+      <QueryProvider>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen w-screen flex flex-col overflow-hidden`}
+        >
+          <NavBar />
+          <div className="flex-1">{children}</div>
+          <ToastContainer />
+        </body>
+      </QueryProvider>
     </html>
   );
 }

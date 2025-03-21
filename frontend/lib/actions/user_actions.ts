@@ -64,7 +64,7 @@ export async function fetchWithAuth(
   const cookieStore = await cookies();
   let accessToken = cookieStore.get("accessToken")?.value;
 
-  const expiration = await getTokenExpiration(accessToken!);
+  const expiration = await getTokenExpiration(accessToken || "");
 
   console.log("Expiration:", expiration);
   if (

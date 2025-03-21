@@ -26,6 +26,7 @@ services:
 
   minio:
     image: minio/minio
+    container_name: minio
     restart: always
     ports:
       - "9000:9000"  
@@ -37,12 +38,14 @@ services:
     volumes:
       - minio-data:/data
   frontend:
-    image: gyfff/audio_file-frontend:latest
+    build: 
+     context: ./frontend
+     dockerfile: Dockerfile.production
     restart: always
     ports:
       - "3000:3000"
   user-service:
-    image: gyfff/user-service:latest 
+    build: ./backend/user-service
     restart: always
     ports:
       - "8000:8000"
@@ -57,7 +60,7 @@ services:
       - minio
 
   audio-service:
-    image: gyfff/audio-service:latest
+    build: ./backend/audio-service
     restart: always
     ports:
       - "8001:8001"

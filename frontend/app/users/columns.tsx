@@ -1,18 +1,7 @@
 "use client";
-import { ColumnDef, TableMeta } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { SessionUser, User } from "@/lib/schemas";
-import { MoreHorizontal, Trash } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Dialog } from "@/components/ui/dialog";
 import { UserActions } from "@/components/userActions";
 
 declare module "@tanstack/react-table" {

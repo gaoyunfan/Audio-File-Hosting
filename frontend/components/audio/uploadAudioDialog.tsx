@@ -9,15 +9,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { RegisterForm } from "@/components/registerFrom";
-import { callValidatePath } from "@/lib/actions/auth";
 import { toastSucccess, toastError } from "@/lib/utils";
 import {
   AudioFormValues,
-  RegisterFormData,
   SESSION_TERMINATED_MESSAGE,
 } from "@/lib/schemas";
-import { createUser } from "@/lib/actions/user_actions";
 import { useQueryClient } from "@tanstack/react-query";
 import { AudioUploadForm } from "./uploadAudioForm";
 import {

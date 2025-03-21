@@ -1,15 +1,12 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserFromSession, refreshAccessToken } from "@/lib/actions/auth";
-import { useRouter } from "next/navigation";
-import { toastError } from "./utils";
+import { getUserFromSession } from "@/lib/actions/auth";
 
 export function useUserSession() {
   const queryClient = useQueryClient();
-  const router = useRouter();
 
-  const { data: user, refetch } = useQuery({
+  const { data: user } = useQuery({
     queryKey: ["userSession"],
     queryFn: getUserFromSession,
   });

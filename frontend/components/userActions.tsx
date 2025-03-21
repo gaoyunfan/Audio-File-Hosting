@@ -7,7 +7,7 @@ import {
   SessionUser,
   User,
 } from "@/lib/schemas";
-import { MoreHorizontal, Trash, Pencil, Edit } from "lucide-react";
+import { MoreHorizontal, Trash, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -28,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { toastSucccess, toastError } from "@/lib/utils";
 import { deleteUser, updateUser } from "@/lib/actions/user_actions";
-import { callValidatePath } from "@/lib/actions/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditUserForm } from "./editUserForm";
 import { useRouter } from "next/navigation";

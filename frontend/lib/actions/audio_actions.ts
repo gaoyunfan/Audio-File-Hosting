@@ -3,13 +3,9 @@
 import { cookies } from "next/headers";
 import { SESSION_TERMINATED_MESSAGE } from "../schemas";
 import {
-  fetchWithAuth,
-  getTokenExpiration,
   handleRefresh,
 } from "./user_actions";
 import { getUserSession } from "./auth";
-import { refreshAccessToken } from "./auth";
-const BUFFER_TIME = 1000 * 60;
 const AUDIO_SERVICE_URL = process.env.AUDIO_SERVICE_URL;
 
 async function fetchWithJWT(endpoint: string, body: object, method = "POST") {

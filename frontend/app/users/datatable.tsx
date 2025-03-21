@@ -21,7 +21,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getUsers } from "@/lib/actions/user_actions";
 import { useUserSession } from "@/lib/hooks";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { CreateUserDialog } from "@/components/createUserDialog";
 import { Filter } from "@/components/filter";
 

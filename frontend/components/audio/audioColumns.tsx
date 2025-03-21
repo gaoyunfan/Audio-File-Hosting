@@ -2,7 +2,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Audio } from "@/lib/schemas";
 import { AudioActions } from "./audioActions";
-import ReactAudioPlayer from "react-audio-player";
 
 export const audioColumns: ColumnDef<Audio>[] = [
   {

@@ -1,4 +1,3 @@
-// app/posts/page.tsx
 import {
   dehydrate,
   HydrationBoundary,

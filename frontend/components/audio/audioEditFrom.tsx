@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   audioEditFormSchema,
@@ -16,19 +16,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { getCategories } from "@/lib/actions/audio_actions";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { Audio } from "@/lib/schemas";
 
 interface AudioEditFormProps {
@@ -56,10 +49,6 @@ export function AudioEditForm({
     defaultValues,
     mode: "onChange",
   });
-
-  useEffect(() => {
-    form.reset(defaultValues);
-  }, [audio]);
 
   return (
     <Form {...form}>

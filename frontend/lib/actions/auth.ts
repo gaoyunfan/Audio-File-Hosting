@@ -18,7 +18,7 @@ const sessionOptions = {
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as "lax",
+    sameSite: "lax" as const,
   },
 };
 
@@ -110,7 +110,7 @@ export async function refreshAccessToken() {
   console.log("refresh access token at:", new Date().toLocaleTimeString());
   const cookieStore = await cookies();
   try {
-    let refreshToken = cookieStore.get("refreshToken")?.value;
+    const refreshToken = cookieStore.get("refreshToken")?.value;
     const res = await fetch(`${USER_SERVICE_URL}/auth/refresh/`, {
       method: "POST",
       headers: {

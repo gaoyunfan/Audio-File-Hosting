@@ -1,5 +1,3 @@
-// app/posts/page.tsx
-import UserList from "@/components/userList";
 import { getUsers } from "@/lib/actions/user_actions";
 import {
   dehydrate,

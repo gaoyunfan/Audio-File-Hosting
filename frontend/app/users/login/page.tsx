@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +7,6 @@ import { handleLogin } from "@/lib/actions/auth";
 import { useRouter } from "next/navigation";
 import { toastSucccess, toastError } from "@/lib/utils";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useUserSession } from "@/lib/hooks";
 
 export default function LoginPage() {
@@ -16,7 +14,6 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [is_submitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
   const { updateUserSession } = useUserSession();
   const isButtonDisabled =
     !username.trim() || !password.trim() || is_submitting;
