@@ -89,3 +89,35 @@ export type SessionData = {
 };
 
 export const SESSION_TERMINATED_MESSAGE = "Session terminated";
+
+export const audioFormSchema = z.object({
+  file: z.any().refine((val) => val?.length === 1, "Audio file is required"),
+  filename: z.string().min(1, "Filename is required"),
+  description: z.string().min(1, "Description is required"),
+  category_id: z.string().min(1, "Please select a category"),
+});
+
+export type AudioFormValues = z.infer<typeof audioFormSchema>;
+
+export type CategoryData = {
+  id: string;
+  name: string;
+};
+export type Audio = {
+  id: string;
+  file_name: string;
+  description: string;
+  category_data: CategoryData;
+  file_url: string;
+  upload_date: string;
+  user_id: string;
+  owner: string;
+};
+
+export const audioEditFormSchema = z.object({
+  filename: z.string().min(1, "Filename is required"),
+  description: z.string().min(1, "Description is required"),
+  category_id: z.string().min(1, "Please select a category"),
+});
+
+export type AudioEditFormValues = z.infer<typeof audioEditFormSchema>;

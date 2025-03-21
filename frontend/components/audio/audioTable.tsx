@@ -8,6 +8,14 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import {
   Table,
@@ -24,36 +32,27 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateUserDialog } from "@/components/createUserDialog";
 import { Filter } from "@/components/filter";
+import { getAudios } from "@/lib/actions/audio_actions";
+import { UploadAudioDialog } from "./uploadAudioDialog";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
 }
 
-export function DataTable<TData, TValue>({
+export function AudioDataTable<TData, TValue>({
   columns,
 }: DataTableProps<TData, TValue>) {
   const { data = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: getUsers,
-    refetchInterval: 1000 * 60,
+    queryKey: ["audios"],
+    queryFn: getAudios,
+    refetchInterval: 1000 * 60 * 5,
   });
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const { user } = useUserSession();
-  const tableData = useMemo(() => {
-    if (!user) return data;
-
-    const foundUser = data.find((u: { id: string }) => u?.id === user?.id);
-    if (!foundUser) return data;
-
-    return [
-      foundUser,
-      ...data.filter((u: { id: string }) => u?.id !== user?.id),
-    ];
-  }, [data, user]);
 
   const table = useReactTable({
-    data: tableData || [],
+    data: data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -65,7 +64,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="p-5 flex flex-col space-y-4  h-[calc(100vh-5rem)]">
       <div className="flex justify-end">
-        <CreateUserDialog />
+        <UploadAudioDialog />
       </div>
       <Table className="w-full border border-gray-300 border-collapse overflow-y-auto">
         <TableHeader className="bg-gray-200 border-b border-gray-300 sticky top-0 z-10">

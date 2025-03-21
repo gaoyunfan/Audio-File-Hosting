@@ -14,7 +14,7 @@ export function Filter({ column }: { column: Column<any, unknown> }) {
 
   return (
     <DebouncedInput
-      className="w-36 border shadow rounded"
+      className="w-24 border shadow rounded"
       onChange={(value) => column.setFilterValue(value)}
       placeholder={`Search...`}
       type="text"

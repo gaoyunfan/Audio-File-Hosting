@@ -8,24 +8,20 @@ from django.db import transaction
 from .permissions import IsSelfOrAdminOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+import requests
+import os
 
 User = get_user_model()
 
 
 class UserListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("username")
     serializer_class = UserSerializer
 
 
 class UserDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsSelfOrAdminOrReadOnly]
-
-    def get_object(self, pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            return None
 
     def get(self, request, pk):
         user = self.get_object(pk)
@@ -55,6 +51,24 @@ class UserDetailView(APIView):
             return Response(
                 {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
             )
+        audio_service_url = os.getenv("AUDIO_SERVICE_URL")
+        auth_header = request.headers.get("Authorization")
+        if audio_service_url:
+            try:
+                audio_response = requests.delete(
+                    f"{audio_service_url}/audios/purge/",
+                    headers={"Authorization": auth_header},
+                    timeout=5,
+                )
+                if audio_response.status_code >= 400:
+                    print(
+                        "Warning: audio service responded with",
+                        audio_response.status_code,
+                    )
+                else:
+                    print("Audio service responded with", audio_response.status_code)
+            except Exception as e:
+                print("Audio service error:", str(e))
         user.delete()
         return Response(
             {"message": "User deleted successfully"}, status=status.HTTP_204_NO_CONTENT

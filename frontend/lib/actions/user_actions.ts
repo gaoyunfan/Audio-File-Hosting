@@ -95,7 +95,11 @@ export async function fetchWithAuth(
     if (!response.ok) {
       let errorMessage = "Request failed";
       if (typeof data.message === "string") {
-        errorMessage = data.message;
+        if ("detail" in data) {
+          errorMessage = data.detail;
+        } else {
+          errorMessage = data.message;
+        }
       } else if (typeof data.message === "object") {
         const firstError = `${Object.values(data.message)[0]}`;
         errorMessage = firstError.charAt(0).toUpperCase() + firstError.slice(1);
@@ -112,7 +116,7 @@ export async function fetchWithAuth(
     };
   }
 }
-async function getTokenExpiration(
+export async function getTokenExpiration(
   token: string,
   secret?: string
 ): Promise<Date | null> {
@@ -133,4 +137,26 @@ async function getTokenExpiration(
     console.error("Error decoding JWT:", error);
     return null;
   }
+}
+
+export async function handleRefresh() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+  const expiration = await getTokenExpiration(
+    cookieStore.get("accessToken")?.value!
+  );
+
+  if (
+    !accessToken ||
+    (expiration && expiration < new Date(new Date().getTime() + BUFFER_TIME))
+  ) {
+    console.log(`access token is going to expire at ${expiration}`);
+    const refreshResult = await refreshAccessToken();
+    if (!refreshResult.success) {
+      console.error("Session terminated: Unable to refresh access token");
+      return { success: false, message: SESSION_TERMINATED_MESSAGE };
+    }
+    return { success: true };
+  }
+  return { success: true };
 }

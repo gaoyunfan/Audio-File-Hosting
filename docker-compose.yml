@@ -1,4 +1,16 @@
 services:
+  audio-db:
+    image: postgres:17-alpine
+    restart: always
+    volumes:
+      - audio_db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${AUDIO_DB}
+      - POSTGRES_USER=${AUDIO_DB_USER}
+      - POSTGRES_PASSWORD=${AUDIO_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+
   user-db:
     image: postgres:17-alpine
     restart: always
@@ -11,18 +23,20 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@test.com
-      PGADMIN_DEFAULT_PASSWORD: adminpassword
-    ports:
-      - "5050:80"
-    depends_on:
-      - user-db
 
+  minio:
+    image: minio/minio
+    container_name: minio
+    restart: always
+    ports:
+      - "9000:9000"  
+      - "9001:9001"  
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
   redis:
     image: redis:7.4-alpine
     restart: always
@@ -59,8 +73,10 @@ services:
       - DB_PORT=5432
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+
     depends_on:
       - user-db
+      - minio
       - redis
     develop:
       watch:
@@ -73,7 +89,40 @@ services:
             - .dockerignore
         - action: rebuild
           path: ./backend/user-service/requirements.txt
+  audio-service:
+    build: ./backend/audio-service
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_NAME=${AUDIO_DB}
+      - DB_USER=${AUDIO_DB_USER}
+      - DB_PASSWORD=${AUDIO_DB_PASSWORD}
+      - DB_HOST=${AUDIO_DB_HOST}
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_ENDPOINT=http://minio:9000
+    depends_on:
+      - audio-db
+      - redis
+    develop:
+      watch:
+        - action: sync
+          path: ./backend/audio-service/
+          target: /code/audio-service/
+          ignore:
+            - audio_venv
+            - __pycache__
+            - .dockerignore
+        - action: rebuild
+          path: ./backend/audio-service/requirements.txt
   
 volumes:
   user_db_data:
   redis_data:
+  audio_db_data:
+  minio-data:

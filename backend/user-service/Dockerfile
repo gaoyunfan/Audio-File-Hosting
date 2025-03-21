@@ -18,6 +18,8 @@ COPY . .
 
 EXPOSE 8000
 
+ENV DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
 
-CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py shell < setup.py && python manage.py runserver 0.0.0.0:8000"]
 

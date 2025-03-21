@@ -4,10 +4,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.db import transaction
 from users.serializers import RegisterSerializer, UserSerializer
-from authentication.serializers import CustomTokenObtainPairSerializer
+from authentication.serializers import (
+    CustomTokenObtainPairSerializer,
+    CustomTokenRefreshSerializer,
+)
 
 import logging
 
@@ -42,6 +45,10 @@ class LoginView(TokenObtainPairView):
         return Response(
             {"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
 
 
 class RegisterView(APIView):
