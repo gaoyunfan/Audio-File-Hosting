@@ -32,7 +32,7 @@ async function fetchData(endpoint: string, body: object) {
 
     const data = await response.json();
     if (!response.ok)
-      throw new Error(data.message || data.message || "Request failed");
+      throw new Error(data.message || data.detail || "Request failed");
 
     return { success: true, data };
   } catch (error) {

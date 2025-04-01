@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -24,7 +25,7 @@ class UserDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsSelfOrAdminOrReadOnly]
 
     def get(self, request, pk):
-        user = self.get_object(pk)
+        user = get_object_or_404(User, pk=pk)
         if not user:
             return Response(
                 {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
@@ -34,7 +35,7 @@ class UserDetailView(APIView):
 
     def patch(self, request, pk):
 
-        user = self.get_object(pk)
+        user = get_object_or_404(User, pk=pk)
         if not user:
             return Response(
                 {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
@@ -46,7 +47,7 @@ class UserDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        user = self.get_object(pk)
+        user = get_object_or_404(User, pk=pk)
         if not user:
             return Response(
                 {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
